@@ -1,0 +1,188 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_USER  = credentials('dockerhub-username')
+        DOCKERHUB_PASS  = credentials('dockerhub-password')
+        IMAGE_TAG       = "${BUILD_NUMBER}"
+        SONAR_TOKEN     = credentials('sonarqube-token')
+        ARGOCD_TOKEN    = credentials('argocd-token')
+        SONAR_HOST      = "http://sonarqube:9000"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo '📥 Checking out source code...'
+                checkout scm
+                sh 'git log --oneline -3'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                echo '🔍 Running SonarQube code quality scan...'
+                withSonarQubeEnv('SonarQube') {
+                    sh """
+                        sonar-scanner \
+                          -Dsonar.projectKey=shopflow \
+                          -Dsonar.sources=backend,frontend/src \
+                          -Dsonar.exclusions=**/node_modules/**,**/build/**,**/*.test.js \
+                          -Dsonar.host.url=${SONAR_HOST} \
+                          -Dsonar.login=${SONAR_TOKEN}
+                    """
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            parallel {
+                stage('Build Backend') {
+                    steps {
+                        sh """
+                            docker build -t ${DOCKERHUB_USER}/shopflow-backend:${IMAGE_TAG} \
+                              --target production ./backend
+                            echo "✅ Backend image built"
+                        """
+                    }
+                }
+                stage('Build Frontend') {
+                    steps {
+                        sh """
+                            docker build -t ${DOCKERHUB_USER}/shopflow-frontend:${IMAGE_TAG} \
+                              --target production ./frontend
+                            echo "✅ Frontend image built"
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Trivy Security Scan') {
+            steps {
+                echo '🛡️ Scanning images for vulnerabilities...'
+                sh """
+                    for img in backend frontend; do
+                        echo "\\n--- Scanning shopflow-\${img}:${IMAGE_TAG} ---"
+                        trivy image \\
+                          --exit-code 1 \\
+                          --severity HIGH,CRITICAL \\
+                          --no-progress \\
+                          ${DOCKERHUB_USER}/shopflow-\${img}:${IMAGE_TAG} || {
+                            echo "❌ CRITICAL vulnerability in \${img}!"
+                            exit 1
+                        }
+                    done
+                    echo "✅ All images passed security scan"
+                """
+            }
+        }
+
+        stage('OWASP Dependency Check') {
+            steps {
+                echo '🔐 Running OWASP Dependency Check...'
+                sh """
+                    dependency-check \\
+                      --project shopflow \\
+                      --scan backend/package.json \\
+                      --scan frontend/package.json \\
+                      --format HTML \\
+                      --out reports/ \\
+                      --failOnCVSS 8
+                """
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                sh """
+                    echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER} --password-stdin
+
+                    for img in backend frontend; do
+                        docker push ${DOCKERHUB_USER}/shopflow-\${img}:${IMAGE_TAG}
+                        docker tag  ${DOCKERHUB_USER}/shopflow-\${img}:${IMAGE_TAG} \\
+                                    ${DOCKERHUB_USER}/shopflow-\${img}:latest
+                        docker push ${DOCKERHUB_USER}/shopflow-\${img}:latest
+                        echo "✅ Pushed shopflow-\${img}:${IMAGE_TAG}"
+                    done
+                """
+            }
+        }
+
+        stage('Update Helm Chart (GitOps)') {
+            steps {
+                echo '📝 Bumping image tag in Helm values...'
+                sh """
+                    sed -i "s/tag: .*/tag: \\"${IMAGE_TAG}\\"/" helm/shopflow/values.yaml
+                    git config user.email "jenkins@shopflow.in"
+                    git config user.name  "Jenkins CI"
+                    git add helm/shopflow/values.yaml
+                    git commit -m "ci: bump image tag to ${IMAGE_TAG} [skip ci]"
+                    git push origin main
+                """
+            }
+        }
+
+        stage('ArgoCD Sync') {
+            steps {
+                echo '🚀 Triggering ArgoCD deployment...'
+                sh """
+                    argocd app sync shopflow \\
+                      --server argocd-server:443 \\
+                      --auth-token ${ARGOCD_TOKEN} \\
+                      --insecure
+
+                    argocd app wait shopflow \\
+                      --health \\
+                      --timeout 300
+                    echo "✅ Deployment successful"
+                """
+            }
+        }
+
+        stage('Smoke Tests') {
+            steps {
+                echo '🧪 Running smoke tests...'
+                sh """
+                    sleep 20
+                    curl -f http://localhost:5000/health || { echo "❌ Backend unhealthy"; exit 1; }
+                    curl -f http://localhost:3000       || { echo "❌ Frontend unhealthy"; exit 1; }
+                    echo "✅ All services healthy!"
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo """
+╔══════════════════════════════════════╗
+║   ✅  PIPELINE SUCCESS               ║
+║   Build:  #${BUILD_NUMBER}                    ║
+║   Tag:    ${IMAGE_TAG}                    ║
+║   Status: All services deployed      ║
+╚══════════════════════════════════════╝
+            """
+        }
+        failure {
+            echo '❌ Pipeline failed! Check logs above.'
+        }
+        always {
+            sh """
+                docker rmi ${DOCKERHUB_USER}/shopflow-backend:${IMAGE_TAG}  || true
+                docker rmi ${DOCKERHUB_USER}/shopflow-frontend:${IMAGE_TAG} || true
+                docker logout || true
+            """
+            archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+        }
+    }
+}

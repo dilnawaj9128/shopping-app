@@ -1,0 +1,49 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: shopflow-alerts
+  namespace: shopflow
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: shopflow.rules
+      rules:
+        - alert: PodDown
+          expr: up{namespace="shopflow"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} is down"
+
+        - alert: HighCPU
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{namespace="shopflow"}[5m])) by (pod)
+            / sum(container_spec_cpu_quota{namespace="shopflow"} / container_spec_cpu_period{namespace="shopflow"}) by (pod)
+            > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU on {{ $labels.pod }}"
+
+        - alert: HighMemory
+          expr: |
+            sum(container_memory_working_set_bytes{namespace="shopflow"}) by (pod)
+            / sum(container_spec_memory_limit_bytes{namespace="shopflow"}) by (pod)
+            > 0.85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High Memory on {{ $labels.pod }}"
+
+        - alert: BackendDown
+          expr: up{job="shopflow-backend"} == 0
+          for: 30s
+          labels:
+            severity: critical
+          annotations:
+            summary: "ShopFlow backend is DOWN!"

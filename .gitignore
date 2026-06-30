@@ -1,0 +1,32 @@
+# ── Secrets — NEVER commit these ───────────────────────
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*secret*
+ansible/vault_pass.txt
+terraform/*.tfvars
+
+# ── Dependencies ────────────────────────────────────────
+node_modules/
+venv/
+__pycache__/
+
+# ── Build outputs ───────────────────────────────────────
+frontend/build/
+backend/dist/
+reports/
+coverage/
+
+# ── Terraform state ─────────────────────────────────────
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# ── IDE / OS ────────────────────────────────────────────
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
