@@ -1,12 +1,17 @@
 # ── Stage 1: Install deps ────────────────────────────────
 FROM node:22-alpine AS builder
 
+RUN apk update && apk upgrade --no-cache && \
+    npm install -g npm@latest
+
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
 # ── Stage 2: Production ──────────────────────────────────
 FROM node:22-alpine AS production
+RUN apk update && apk upgrade --no-cache && \
+    npm install -g npm@latest
 
 # Security: non-root user
 RUN addgroup -g 1001 -S nodejs && \
