@@ -3,7 +3,8 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps && \
+    npm install ajv@^8 ajv-keywords@^5 --legacy-peer-deps
 COPY . .
 RUN npm run build
 
