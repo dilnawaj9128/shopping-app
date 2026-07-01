@@ -1,5 +1,5 @@
-FROM node:22-alpine AS builder
-RUN apk update && apk upgrade --no-cache
+# ── Stage 1: Build ──────────────────────────────────────
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
@@ -9,13 +9,15 @@ COPY . .
 RUN npm run build
 
 # ── Stage 2: Serve with Nginx ────────────────────────────
-FROM nginx:1.28-alpine AS production
+FROM nginx:1.25-alpine AS production
+
+# Fix CVE-2026-31789 openssl vulnerability
+RUN apk update && apk upgrade --no-cache
 
 # Non-root setup
 RUN addgroup -g 1001 -S nginx-grp && \
     adduser -S nginx-usr -u 1001
 
-# Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/
 
