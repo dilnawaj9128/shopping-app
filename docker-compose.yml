@@ -81,6 +81,7 @@ services:
 
 volumes:
   mongo_data:
+    name: shopflow_mongo_data
 
 networks:
   shopflow-net:
