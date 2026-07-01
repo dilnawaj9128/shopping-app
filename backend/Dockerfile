@@ -1,12 +1,12 @@
 # ── Stage 1: Install deps ────────────────────────────────
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
 # ── Stage 2: Production ──────────────────────────────────
-FROM node:18-alpine AS production
+FROM node:22-alpine AS production
 
 # Security: non-root user
 RUN addgroup -g 1001 -S nodejs && \
