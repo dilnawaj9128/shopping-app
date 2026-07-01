@@ -1,5 +1,5 @@
 # ── Stage 1: Build ──────────────────────────────────────
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
@@ -9,7 +9,7 @@ COPY . .
 RUN npm run build
 
 # ── Stage 2: Serve with Nginx ────────────────────────────
-FROM nginx:1.25-alpine AS production
+FROM nginx:1.28-alpine AS production
 
 # Non-root setup
 RUN addgroup -g 1001 -S nginx-grp && \
