@@ -1,31 +1,22 @@
 FROM node:22-alpine AS builder
 
-RUN apk update && apk upgrade --no-cache
-
 WORKDIR /app
-
 COPY package*.json ./
-
 RUN npm install --legacy-peer-deps && \
     npm install ajv@^8 ajv-keywords@^5 --legacy-peer-deps
-
 COPY . .
-
 RUN npm run build
 
 # ── Stage 2: Serve with Nginx ────────────────────────────
 FROM nginx:1.28-alpine AS production
-
-RUN apk update && apk upgrade --no-cache
 
 # Non-root setup
 RUN addgroup -g 1001 -S nginx-grp && \
     adduser -S nginx-usr -u 1001
 
 # Remove default config
-RUN rm -f /etc/nginx/conf.d/default.conf
-
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/
 
 COPY --from=builder /app/build /usr/share/nginx/html
 
@@ -34,11 +25,11 @@ RUN chown -R nginx-usr:nginx-grp /usr/share/nginx/html && \
     chown -R nginx-usr:nginx-grp /var/log/nginx && \
     chown -R nginx-usr:nginx-grp /etc/nginx/conf.d && \
     mkdir -p /var/run/nginx && \
+    chown -R nginx-usr:nginx-grp /var/run/nginx && \
     touch /var/run/nginx.pid && \
-    chown -R nginx-usr:nginx-grp /var/run
+    chown nginx-usr:nginx-grp /var/run/nginx.pid
 
 USER nginx-usr
-
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
