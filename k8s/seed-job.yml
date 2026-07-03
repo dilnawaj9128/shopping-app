@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-job
+  namespace: shopflow
+spec:
+  template:
+    spec:
+      containers:
+        - name: seed
+          image: dilnawaz9128/shopflow-backend:latest
+          command: ["node", "config/seed.js"]
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: shopflow-secret
+                  key: MONGO_URI
+            - name: SEED_ADMIN_EMAIL
+              value: "admin@shopflow.in"
+            - name: SEED_ADMIN_PASS
+              value: "Admin2024"
+            - name: SEED_USER_EMAIL
+              value: "user@shopflow.in"
+            - name: SEED_USER_PASS
+              value: "User2024"
+      restartPolicy: Never
+  backoffLimit: 3

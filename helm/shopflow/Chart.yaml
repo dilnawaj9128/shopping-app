@@ -1,9 +1,0 @@
-apiVersion: v2
-name: shopflow
-description: ShopFlow Amazon-style E-Commerce Platform
-type: application
-version: 1.0.0
-appVersion: "1.0.0"
-maintainers:
-  - name: Md Dilnawaj
-    email: REPLACE_WITH_YOUR_EMAIL
