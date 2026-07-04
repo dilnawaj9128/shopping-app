@@ -1,6 +1,14 @@
 pipeline {
     agent any
+    
+    options {
+        disableConcurrentBuilds()
+    }
 
+    environment {
+        DOCKER_USER = 'dilnawaz9128'
+        IMAGE_TAG   = "v3"
+    }
     stages {
 
         stage('Checkout') {
@@ -37,13 +45,13 @@ pipeline {
 
         stage('Build Backend') {
             steps {
-                sh 'docker build -t shopping-app-backend:latest ./backend'
+                sh "docker build -t shopping-app-backend:${IMAGE_TAG} ./backend"
             }
         }
 
         stage('Build Frontend') {
             steps {
-                sh 'docker build -t shopping-app-frontend:latest ./frontend'
+                sh "docker build -t shopping-app-frontend:${IMAGE_TAG} ./frontend"
             }
         }
 
@@ -55,7 +63,7 @@ pipeline {
                 '''
             }
         }
-        stage("Push to Docker Hub") {
+        stage('Push to Docker Hub') {
             steps {
                 echo "Pushing images to Docker Hub"
                 withCredentials([usernamePassword(
@@ -63,38 +71,81 @@ pipeline {
                     passwordVariable: 'dockerHubPass',
                     usernameVariable: 'dockerHubUser')]) {
                     sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                    sh "docker image tag shopping-app-backend:latest ${env.dockerHubUser}/shopflow-backend:latest"
-                    sh "docker image tag shopping-app-frontend:latest ${env.dockerHubUser}/shopflow-frontend:latest"
+
+                    // Build number tag push
+                    sh "docker image tag shopping-app-backend:${IMAGE_TAG} ${env.dockerHubUser}/shopflow-backend:${IMAGE_TAG}"
+                    sh "docker image tag shopping-app-frontend:${IMAGE_TAG} ${env.dockerHubUser}/shopflow-frontend:${IMAGE_TAG}"
+                    sh "docker push ${env.dockerHubUser}/shopflow-backend:${IMAGE_TAG}"
+                    sh "docker push ${env.dockerHubUser}/shopflow-frontend:${IMAGE_TAG}"
+
+                    // Latest tag bhi push karo
+                    sh "docker image tag shopping-app-backend:${IMAGE_TAG} ${env.dockerHubUser}/shopflow-backend:latest"
+                    sh "docker image tag shopping-app-frontend:${IMAGE_TAG} ${env.dockerHubUser}/shopflow-frontend:latest"
                     sh "docker push ${env.dockerHubUser}/shopflow-backend:latest"
                     sh "docker push ${env.dockerHubUser}/shopflow-frontend:latest"
+
+                    sh "docker logout"
                 }
                 echo "mages pushed successfully"
             }
         }
-        stage('Deploy to Kubernetes') {
+        stage("Update K8s Manifests") {
             steps {
-                echo "Deploying to Kubernetes"
-                sh """
-                    kubectl set image deployment/backend \
-                    backend=dilnawaz9128/shopflow-backend:latest \
-                    -n shopflow
+                echo "Updating image tags in K8s manifests"
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-creds',
+                    passwordVariable: 'GIT_PASS',
+                    usernameVariable: 'GIT_USER')]) {
+                    sh """
+                        # Update image tags
+                        sed -i "s|image: ${DOCKER_USER}/shopflow-backend:.*|image: ${DOCKER_USER}/shopflow-backend:${IMAGE_TAG}|g" k8s/backend.yml
+                        sed -i "s|image: ${DOCKER_USER}/shopflow-frontend:.*|image: ${DOCKER_USER}/shopflow-frontend:${IMAGE_TAG}|g" k8s/frontend.yml
 
-                    kubectl set image deployment/frontend \
-                    frontend=dilnawaz9128/shopflow-frontend:latest \
-                    -n shopflow
+                        # Git config
+                        git config user.email "jenkins@shopflow.in"
+                        git config user.name "Jenkins CI"
 
-                    kubectl rollout status deployment/backend -n shopflow --timeout=120s
-                    kubectl rollout status deployment/frontend -n shopflow --timeout=120s
-                """
-                echo "kubernetes deployment successful"
+                        # Commit aur push
+                        git add k8s/backend.yml k8s/frontend.yml
+                        git commit -m "ci: update image tag to ${IMAGE_TAG} [skip ci]" || echo "Nothing to commit"
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/dilnawaj9128/shopping-app.git main
+                    """
+                }
+                echo "k8s manifests updated"
             }
         }
-        stage("Smoke Test") {
+        
+        stage("Wait for ArgoCD Deployment") {
             steps {
-                echo "Testing if app is running"
-                sh "sleep 30"
-                sh "curl -f http://16.170.216.93:5000/health"
-                sh "curl -f http://16.170.216.93:9090"
+                echo "Waiting for ArgoCD auto-sync deployment"
+                
+                withCredentials([
+                    string(credentialsId: 'argocd-token', variable: 'ARGOCD_TOKEN')
+                ]) {
+                    sh '''
+                        argocd app wait shopflow \
+                        --server localhost:8443 \
+                        --auth-token "$ARGOCD_TOKEN" \
+                        --insecure \
+                        --sync \
+                        --health \
+                        --timeout 300
+                    '''
+                }
+                echo "ArgoCD Application is Synced and Healthy"
+            }
+        }
+        stage('Smoke Test') {
+            steps {
+                echo 'Testing if backend is running'
+                sh '''
+                    kubectl run smoke-test \
+                    --rm -i \
+                    --restart=Never \
+                    --image=curlimages/curl \
+                    -n shopflow \
+                    -- curl -f http://backend:5000/health
+                '''
             }
         }
     }
