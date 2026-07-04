@@ -1,0 +1,21 @@
+cat > ~/start-services.sh << 'EOF'
+#!/bin/bash
+
+pkill -f "kubectl port-forward" || true
+sleep 2
+
+kubectl port-forward svc/argocd-server -n argocd 8443:443 --address 0.0.0.0 &
+kubectl port-forward svc/monitoring-grafana -n monitoring 3001:80 --address 0.0.0.0 &
+kubectl port-forward svc/frontend -n shopflow 9090:3000 --address 0.0.0.0 &
+
+sleep 3
+
+echo "All services started!"
+echo "ArgoCD:  https://13.62.91.146:8443"
+echo "Grafana: http://13.62.91.146:3001"
+echo "App:     http://13.62.91.146:9090"
+EOF
+
+chmod +x ~/start-services.sh
+
+~/start-services.sh
