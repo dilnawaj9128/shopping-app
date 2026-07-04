@@ -1,17 +1,14 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: shopflow
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/dilnawaz9128/shopflow-devops
+    repoURL: https://github.com/dilnawaj9128/shopping-app.git
     targetRevision: main
-    path: helm/shopflow
+    path: k8s
   destination:
     server: https://kubernetes.default.svc
     namespace: shopflow
@@ -21,4 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - PrunePropagationPolicy=foreground
