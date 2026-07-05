@@ -17,7 +17,7 @@ spec:
         - name: dockerhub-secret
       containers:
         - name: backend
-          image: dilnawaz9128/shopflow-backend:116
+          image: dilnawaz9128/shopflow-backend:118
           ports:
             - containerPort: 5000
           env:
