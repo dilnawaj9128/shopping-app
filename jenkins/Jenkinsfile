@@ -118,20 +118,21 @@ pipeline {
         stage("Wait for ArgoCD Deployment") {
             steps {
                 echo "Waiting for ArgoCD auto-sync deployment"
-                
+
                 withCredentials([
                     string(credentialsId: 'argocd-token', variable: 'ARGOCD_TOKEN')
                 ]) {
                     sh '''
                         argocd app wait shopflow \
-                        --server localhost:8443 \
-                        --auth-token "$ARGOCD_TOKEN" \
-                        --insecure \
-                        --sync \
-                        --health \
-                        --timeout 300
+                            --server 172.19.0.2:31618 \
+                            --auth-token "$ARGOCD_TOKEN" \
+                            --plaintext \
+                            --sync \
+                            --health \
+                            --timeout 300
                     '''
                 }
+
                 echo "ArgoCD Application is Synced and Healthy"
             }
         }
