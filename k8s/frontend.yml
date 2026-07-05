@@ -18,7 +18,7 @@ spec:
         - name: dockerhub-secret
       containers:
         - name: frontend
-          image: dilnawaz9128/shopflow-frontend:144
+          image: dilnawaz9128/shopflow-frontend:145
           ports:
             - containerPort: 3000
 ---
