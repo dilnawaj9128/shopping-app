@@ -4,8 +4,8 @@ metadata:
   name: frontend
   namespace: shopflow
 spec:
-  replicas: 3
-  selector:
+  replicas: 2
+  revisionHistoryLimit: 2
     matchLabels:
       app: frontend
   template:
