@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         DOCKER_USER = 'dilnawaz9128'
-        IMAGE_TAG   = ":10"
+        IMAGE_TAG   = ":11"
     }
     stages {
 
