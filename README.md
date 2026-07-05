@@ -1,17 +1,28 @@
-# 🛒 ShopFlow — Amazon-style E-Commerce DevOps Platform
+<div align="center">
 
-> Production-grade e-commerce platform with complete DevOps lifecycle on AWS EC2
+# 🛒 ShopFlow
+### End-to-End DevOps CI/CD & GitOps Project
 
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat&logo=kubernetes&logoColor=white)
-![Jenkins](https://img.shields.io/badge/Jenkins-D24939?style=flat&logo=jenkins&logoColor=white)
-![ArgoCD](https://img.shields.io/badge/ArgoCD-EF7B4D?style=flat&logo=argo&logoColor=white)
-![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat&logo=prometheus&logoColor=white)
-![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat&logo=grafana&logoColor=white)
-![SonarQube](https://img.shields.io/badge/SonarQube-4E9BCD?style=flat&logo=sonarqube&logoColor=white)
-![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=flat&logo=terraform&logoColor=white)
-![Ansible](https://img.shields.io/badge/Ansible-EE0000?style=flat&logo=ansible&logoColor=white)
-![AWS](https://img.shields.io/badge/AWS-FF9900?style=flat&logo=amazonaws&logoColor=white)
+*Amazon-style e-commerce platform with complete DevOps lifecycle*
+
+![AWS](https://img.shields.io/badge/AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![Jenkins](https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white)
+![ArgoCD](https://img.shields.io/badge/ArgoCD-EF7B4D?style=for-the-badge&logo=argo&logoColor=white)
+![SonarQube](https://img.shields.io/badge/SonarQube-4E9BCD?style=for-the-badge&logo=sonarqube&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-1904DA?style=for-the-badge&logo=aquasecurity&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)
+![Ansible](https://img.shields.io/badge/Ansible-EE0000?style=for-the-badge&logo=ansible&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![NodeJS](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
+
+</div>
 
 ---
 
@@ -19,147 +30,326 @@
 
 ShopFlow is a full-stack e-commerce web application built with React, Node.js, and MongoDB — deployed on AWS EC2 using a complete DevOps pipeline including CI/CD, GitOps, container orchestration, and real-time monitoring.
 
+The project demonstrates automated CI/CD, code quality analysis, container security scanning, GitOps-based Kubernetes deployment, ingress routing, and infrastructure monitoring.
+
 ---
 
 ## 🏗️ Architecture
 
-```
-Developer → git push
-      ↓
-GitHub Webhook → Jenkins CI/CD Pipeline
-      ↓
-SonarQube → Build → Trivy Scan → Docker Hub Push
-      ↓
-ArgoCD detects new image → Auto-deploy to Kubernetes
-      ↓
-Prometheus + Grafana → Real-time Monitoring
+```text
+                         Developer
+                             │
+                             │ git push
+                             ▼
+                         GitHub
+                             │
+                             │ Webhook
+                             ▼
+                          Jenkins
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+          ▼                  ▼                  ▼
+      SonarQube          Docker Build       Trivy Scan
+          │                  │                  │
+          └──────────────────┼──────────────────┘
+                             │
+                             ▼
+                         Docker Hub
+                             │
+                             ▼
+                Update Kubernetes Manifests
+                             │
+                             ▼
+                          GitHub
+                             │
+                             ▼
+                          Argo CD
+                             │
+                         Auto Sync
+                             │
+                             ▼
+                     Kubernetes (KIND)
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+          ▼                  ▼                  ▼
+    Frontend Pods       Backend Pods       MongoDB
+          │
+          ▼
+    Kubernetes Service
+          │
+          ▼
+    NGINX Ingress
+          │
+          ▼
+       EC2 Nginx
+          │
+          ▼
+        Internet
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technologies Used
 
-| Layer | Technology |
+| Category | Technology |
 |---|---|
-| **Frontend** | React.js + Nginx |
-| **Backend** | Node.js + Express |
-| **Database** | MongoDB |
-| **Containerization** | Docker (multi-stage builds) |
-| **Orchestration** | Kubernetes (KIND on AWS EC2) |
-| **CI/CD** | Jenkins (9-stage pipeline) |
-| **GitOps** | ArgoCD |
+| **Cloud Platform** | AWS EC2 |
+| **Source Control** | Git & GitHub |
+| **CI/CD** | Jenkins |
 | **Code Quality** | SonarQube |
-| **Security Scan** | Trivy |
-| **Monitoring** | Prometheus + Grafana |
-| **IaC** | Terraform (AWS EKS + VPC) |
+| **Security Scanning** | Trivy |
+| **Containerization** | Docker (multi-stage builds) |
+| **Container Registry** | Docker Hub |
+| **Orchestration** | Kubernetes (KIND) |
+| **GitOps** | Argo CD |
+| **Package Manager** | Helm |
+| **Ingress** | NGINX Ingress Controller |
+| **Reverse Proxy** | Nginx |
+| **Monitoring** | Prometheus + Grafana (via Helm) |
+| **IaC** | Terraform |
 | **Config Management** | Ansible |
-| **Cloud** | AWS EC2 |
+| **Database** | MongoDB |
+| **Frontend** | React.js |
+| **Backend** | Node.js + Express |
 
 ---
 
-## 📁 Project Structure
+## 🔄 CI/CD Pipeline — 9 Stages
 
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     JENKINS PIPELINE                            │
+│                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
+│  │Checkout  │→ │SonarQube │→ │ Quality  │→ │  Build   │       │
+│  │          │  │Analysis  │  │  Gate    │  │ Backend  │       │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │
+│                                                   │             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────▼─────┐       │
+│  │  Smoke   │← │Update K8s│← │Push Docker│← │  Build   │       │
+│  │  Test    │  │Manifests │  │   Hub    │  │Frontend  │       │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │
+│        ↑                                                        │
+│  ┌─────┴────┐                                                   │
+│  │  Trivy   │                                                   │
+│  │  Scan    │                                                   │
+│  └──────────┘                                                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
-shopping-app/
-├── frontend/                  # React.js app + Nginx
-│   ├── src/
-│   │   ├── components/        # Navbar, ProductCard, CartDrawer
-│   │   ├── pages/             # Home, Product, Login, Orders
-│   │   ├── context/           # CartContext, AuthContext
-│   │   └── api/               # Axios instance
-│   ├── Dockerfile
-│   └── nginx.conf
-├── backend/                   # Node.js REST API
-│   ├── models/                # Product, User, Order
-│   ├── routes/                # API routes
-│   ├── middleware/            # JWT auth
-│   ├── config/seed.js         # Database seeder
-│   └── Dockerfile
-├── k8s/                       # Kubernetes manifests
-│   ├── namespace.yml
-│   ├── secret.yml
-│   ├── mongodb.yml
-│   ├── backend.yml
-│   ├── frontend.yml
-│   └── seed-job.yml
-├── jenkins/                   # CI/CD pipeline
-│   └── Jenkinsfile
-├── argocd/                    # GitOps config
-│   └── application.yaml
-├── monitoring/                # Prometheus alerts
-│   └── alerts.yaml
-├── ansible/                   # Server automation
-│   ├── site.yml               # Jenkins + Docker + Tools setup
-│   └── inventory.ini
-├── terraform/                 # AWS Infrastructure as Code
-│   ├── main.tf                # EKS + VPC + ECR
-│   ├── variables.tf
-│   └── outputs.tf
-├── cluster.yml                # KIND cluster config
-├── docker-compose.yml         # Local development
-└── .env.example               # Environment template
+
+### Stage 1 — Checkout
+Latest source code pull from GitHub repository.
+
+### Stage 2 — SonarQube Analysis
+Static code analysis — bugs, vulnerabilities, code smells, maintainability.
+
+### Stage 3 — Quality Gate
+Pipeline aborts if SonarQube Quality Gate fails (`abortPipeline: true`).
+
+### Stage 4 — Build Backend
+Docker multi-stage image build for Node.js backend.
+
+### Stage 5 — Build Frontend
+Docker multi-stage image build for React + Nginx frontend.
+
+### Stage 6 — Trivy Security Scan
+Container image vulnerability scanning — pipeline fails on **CRITICAL** CVEs.
+
+### Stage 7 — Push to Docker Hub
+Versioned images pushed:
+```text
+dilnawaz9128/shopflow-backend:85    ← build number tag
+dilnawaz9128/shopflow-backend:latest
+
+dilnawaz9128/shopflow-frontend:85
+dilnawaz9128/shopflow-frontend:latest
+```
+
+### Stage 8 — Update Kubernetes Manifests
+Jenkins auto-updates image tags in K8s manifests and pushes to GitHub:
+```text
+k8s/backend.yml  → image: dilnawaz9128/shopflow-backend:85
+k8s/frontend.yml → image: dilnawaz9128/shopflow-frontend:85
+```
+
+### Stage 9 — Smoke Test
+Verifies deployed application is accessible and responding correctly.
+
+---
+
+## 🔁 GitOps Workflow
+
+```text
+Jenkins
+   │
+   │ Build & Push (versioned tags)
+   ▼
+Docker Hub
+   │
+   ▼
+Update K8s Manifest Image Tags
+   │
+   ▼
+GitHub Repository
+   │
+   ▼
+Argo CD (detects change)
+   │
+   │ Auto Sync
+   ▼
+Kubernetes Cluster
+   │
+   ▼
+Rolling Deployment ✅
+```
+
+> **Jenkins** → Continuous Integration
+> **Argo CD** → Continuous Deployment
+>
+> Jenkins does **not** directly deploy to Kubernetes.
+> Argo CD handles all deployments via GitOps.
+
+---
+
+## ☸️ Kubernetes Architecture
+
+```text
+shopflow namespace
+│
+├── Frontend Deployment  (2 replicas)
+│   ├── Frontend Pod 1
+│   └── Frontend Pod 2
+│
+├── Backend Deployment   (2 replicas)
+│   ├── Backend Pod 1
+│   └── Backend Pod 2
+│
+├── MongoDB StatefulSet  (1 replica + PVC)
+│   └── MongoDB Pod
+│
+├── Seed Job             (one-time DB seeding)
+│
+├── Secrets
+│   ├── shopflow-secret      (app credentials)
+│   └── dockerhub-secret     (image pull)
+│
+└── Services
+    ├── frontend  (NodePort:3000)
+    ├── backend   (ClusterIP:5000)
+    └── mongodb   (Headless)
 ```
 
 ---
 
-## 🔄 CI/CD Pipeline (Jenkins — 9 Stages)
+## 📊 Monitoring Stack (Helm)
 
+Prometheus and Grafana installed via **Helm** using `kube-prometheus-stack`:
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --set grafana.adminPassword=Admin2024
 ```
-1. Checkout          → GitHub se latest code lena
-2. SonarQube         → Code quality analysis
-3. Quality Gate      → Pass/fail check (abortPipeline)
-4. Build Backend     → Docker multi-stage image build
-5. Build Frontend    → Docker multi-stage image build
-6. Trivy Scan        → CRITICAL vulnerability scan
-7. Push Docker Hub   → Image registry push with build tag
-8. ArgoCD Sync       → Kubernetes deploy trigger
-9. Smoke Test        → Backend + Frontend health check
+
+```text
+Kubernetes Cluster
+        │
+        ▼
+    Prometheus
+    (metrics scraping)
+        │
+        ▼
+      Grafana
+    (visualization)
+        │
+        ▼
+ Dashboards:
+ ├── Kubernetes Cluster Overview  (ID: 7249)
+ ├── Node Exporter Full           (ID: 1860)
+ └── K8s Resource Dashboard
+```
+
+**Metrics Tracked:**
+- CPU utilization per pod/node
+- Memory consumption
+- Network traffic (Rx/Tx)
+- Disk I/O
+- Pod health and restart count
+- Namespace resource statistics
+
+---
+
+## 🌐 Traffic Flow
+
+```text
+Internet User
+      │
+      ▼
+AWS EC2 Public IP
+      │
+      ▼
+EC2 Nginx Reverse Proxy :80
+      │
+      ▼
+NGINX Ingress Controller
+      │
+      ├──────────────────────┐
+      ▼                      ▼
+Frontend Service         Backend Service
+    :3000                    :5000
+      │                        │
+      ▼                        ▼
+Frontend Pods            Backend Pods
+                                │
+                                ▼
+                            MongoDB
+                             :27017
+```
+
+**Ingress Routing:**
+```text
+/       → Frontend Service :3000
+/api    → Backend Service  :5000
 ```
 
 ---
 
-## ☸️ Kubernetes Resources
+## 🔌 Service Access
 
-```
-Namespace: shopflow
-├── Deployment: backend     (2 replicas + readinessProbe)
-├── Deployment: frontend    (2 replicas)
-├── StatefulSet: mongodb    (1 replica + PVC)
-├── Job: seed-job           (database seeding)
-├── Secret: shopflow-secret (credentials)
-├── Secret: dockerhub-secret (image pull)
-└── Services:
-    ├── backend  (ClusterIP:5000)
-    ├── frontend (NodePort:3000)
-    └── mongodb  (Headless)
+| Service | Port |
+|---|---:|
+| ShopFlow App | 80 / 9090 |
+| Jenkins | 8080 |
+| Argo CD | 8443 |
+| Grafana | 3001 |
+| SonarQube | 9000 |
+| Backend API | 5000 |
+| MongoDB | 27017 |
+
+---
+
+## ♻️ EC2 Auto-Restart Configuration
+
+Services configured to start automatically after EC2 restart:
+
+```text
+✅ Docker
+✅ Jenkins
+✅ Nginx
+✅ SonarQube              (restart: unless-stopped)
+✅ KIND Control Plane     (restart: unless-stopped)
+✅ KIND Worker            (restart: unless-stopped)
 ```
 
 ---
 
-## 📊 Monitoring Stack
-
-```
-Prometheus → scrapes K8s metrics
-      ↓
-Grafana Dashboards:
-├── Kubernetes Cluster Overview (ID: 7249)
-├── Node Exporter Full (ID: 1860)
-└── K8s Dashboard (ID: admh545)
-
-Metrics Tracked:
-├── CPU Usage per pod/node
-├── Memory consumption
-├── Network traffic (Rx/Tx)
-├── Disk I/O
-└── Pod health status
-```
-
----
-
-## 🏭 Infrastructure as Code (Terraform)
+## 🏭 Infrastructure as Code — Terraform
 
 ```hcl
-# AWS Resources provisioned:
+# AWS Resources:
 ├── VPC (10.0.0.0/16)
 │   ├── 2 Public Subnets
 │   ├── 2 Private Subnets
@@ -173,98 +363,89 @@ Metrics Tracked:
 ```
 
 ```bash
-# Deploy infrastructure
 cd terraform
 terraform init
 terraform plan
 terraform apply
-
-# Destroy when done
-terraform destroy
+terraform destroy   # when done
 ```
 
 ---
 
-## ⚙️ Server Automation (Ansible)
+## ⚙️ Server Automation — Ansible
 
-```yaml
+```bash
 # Ansible installs on EC2:
 - Docker + Docker Compose
 - Jenkins
-- Trivy (security scanner)
+- Trivy
 - kubectl
 - Helm
 - ArgoCD CLI
 ```
 
 ```bash
-# Run playbook
 cd ansible
 ansible-playbook -i inventory.ini site.yml
 ```
 
 ---
 
-## 🚀 Quick Start
+## 📁 Project Structure
 
-### Local Development
-
-```bash
-# Clone repo
-git clone https://github.com/dilnawaj9128/shopping-app.git
-cd shopping-app
-
-# Environment setup
-cp .env.example .env
-# Fill in your values in .env
-
-# Generate JWT secret
-openssl rand -hex 64
-
-# Start all services
-docker compose up -d
-
-# Access app
-open http://localhost:3000
-
-# Demo credentials:
-# User:  user@shopflow.in / User2024
-# Admin: admin@shopflow.in / Admin2024
-```
-
-### Kubernetes Deployment
-
-```bash
-# Create KIND cluster
-kind create cluster --name shopping-cluster --config cluster.yml
-
-# Deploy all resources
-kubectl apply -f k8s/namespace.yml
-kubectl apply -f k8s/secret.yml
-kubectl apply -f k8s/mongodb.yml
-kubectl apply -f k8s/backend.yml
-kubectl apply -f k8s/frontend.yml
-kubectl apply -f k8s/seed-job.yml
-
-# Check status
-kubectl get all -n shopflow
-
-# Access app
-kubectl port-forward svc/frontend -n shopflow 9090:3000 --address 0.0.0.0 &
-open http://YOUR_EC2_IP:9090
-```
-
-### Start All Services (One Command)
-
-```bash
-chmod +x start-all.sh
-./start-all.sh
-
-# Access:
-# App:     http://YOUR_EC2_IP:9090
-# ArgoCD:  https://YOUR_EC2_IP:8443
-# Grafana: http://YOUR_EC2_IP:3001
-# Jenkins: http://YOUR_EC2_IP:8080
+```text
+shopping-app/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/     # Navbar, ProductCard, CartDrawer
+│   │   ├── pages/          # Home, Product, Login, Orders
+│   │   ├── context/        # CartContext, AuthContext
+│   │   └── api/            # Axios instance
+│   ├── Dockerfile
+│   └── nginx.conf
+│
+├── backend/
+│   ├── models/             # Product, User, Order
+│   ├── routes/             # API routes
+│   ├── middleware/         # JWT auth
+│   ├── config/seed.js      # Database seeder
+│   └── Dockerfile
+│
+├── k8s/
+│   ├── namespace.yml
+│   ├── secret.yml
+│   ├── backend.yml
+│   ├── frontend.yml
+│   ├── mongodb.yml
+│   ├── ingress.yml
+│   └── seed-job.yml
+│
+├── ansible/
+│   ├── site.yml
+│   └── inventory.ini
+│
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+│
+├── argocd/
+│   └── application.yaml
+│
+├── monitoring/
+│   └── alerts.yaml
+│
+├── nginx/
+│   ├── shopflow.conf
+│   ├── argocd.conf
+│   └── grafana.conf
+│
+├── cluster.yml             # KIND cluster config
+├── Jenkinsfile             # 9-stage CI/CD pipeline
+├── docker-compose.yml      # Local development
+├── .env.example
+└── README.md
 ```
 
 ---
@@ -284,43 +465,127 @@ chmod +x start-all.sh
 
 ---
 
-## 🔐 Security Features
+## 🚀 Quick Start
 
-- ✅ Non-root Docker containers
-- ✅ Trivy image vulnerability scanning (blocks CRITICAL CVEs)
-- ✅ SonarQube code quality gates
+### Local Development
+
+```bash
+git clone https://github.com/dilnawaj9128/shopping-app.git
+cd shopping-app
+
+cp .env.example .env
+# Fill in your values + generate JWT:
+# openssl rand -hex 64
+
+docker compose up -d
+
+# Demo credentials:
+# User:  user@shopflow.in  / User2024
+# Admin: admin@shopflow.in / Admin2024
+```
+
+### Kubernetes Deployment
+
+```bash
+kind create cluster --name shopping-cluster --config cluster.yml
+
+kubectl apply -f k8s/namespace.yml
+kubectl apply -f k8s/secret.yml
+kubectl apply -f k8s/mongodb.yml
+kubectl apply -f k8s/backend.yml
+kubectl apply -f k8s/frontend.yml
+kubectl apply -f k8s/seed-job.yml
+
+kubectl get all -n shopflow
+```
+
+### Install Monitoring (Helm)
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring --create-namespace \
+  --set grafana.adminPassword=YourPassword
+```
+
+---
+
+## 🔐 Security Practices
+
+- ✅ SonarQube static code analysis + Quality Gate
+- ✅ Trivy container scanning (blocks CRITICAL CVEs)
+- ✅ Jenkins Credentials Management
 - ✅ Kubernetes Secrets (no hardcoded values)
-- ✅ Jenkins Credentials for secret injection
-- ✅ JWT authentication (30-day expiry)
-- ✅ Rate limiting on API (200 req/15min)
-- ✅ Helmet.js security headers
+- ✅ Docker imagePullSecrets
+- ✅ Non-root Docker containers
+- ✅ JWT authentication
+- ✅ Rate limiting + Helmet.js headers
+- ✅ GitHub PAT for manifest updates
 
 ---
 
-## 🔁 GitOps Flow (ArgoCD)
+## 🔮 Future Improvements
 
-```
-GitHub repo change detected
+- Migrate KIND → Amazon EKS (Terraform)
+- Migrate Docker Hub → Amazon ECR
+- AWS Application Load Balancer
+- HTTPS/TLS with AWS Certificate Manager
+- AWS Secrets Manager
+- Horizontal Pod Autoscaling (HPA)
+- Centralized logging (ELK Stack)
+- Jenkins distributed build agents
+
+---
+
+## 📈 Complete Workflow
+
+```text
+Developer pushes code
         ↓
-ArgoCD auto-sync triggered
+GitHub Webhook triggers Jenkins
         ↓
-Kubernetes resources updated
+SonarQube analyzes code quality
         ↓
-Self-healing: crashed pods auto-restart
+Quality Gate validates requirements
         ↓
-Prune: removed resources auto-deleted
+Docker images built (multi-stage)
+        ↓
+Trivy scans for vulnerabilities
+        ↓
+Images pushed to Docker Hub (versioned)
+        ↓
+Jenkins updates K8s manifests
+        ↓
+Updated manifests pushed to GitHub
+        ↓
+Argo CD detects changes
+        ↓
+Kubernetes rolling deployment
+        ↓
+Smoke test verifies application
+        ↓
+✅ Deployment completed successfully
 ```
 
 ---
+
+<div align="center">
 
 ## 👨‍💻 Author
 
 **Md Dilnawaj** | B.Tech CSE, MDU Rohtak (2027)
 
-- 🔗 GitHub: [github.com/dilnawaj9128](https://github.com/dilnawaj9128)
-- 🔗 LinkedIn: [linkedin.com/in/md-dilnawaj-332370301](https://linkedin.com/in/md-dilnawaj-332370301)
-- 🐳 Docker Hub: [hub.docker.com/u/dilnawaz9128](https://hub.docker.com/u/dilnawaz9128)
+[![GitHub](https://img.shields.io/badge/GitHub-dilnawaj9128-181717?style=for-the-badge&logo=github)](https://github.com/dilnawaj9128)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-md--dilnawaj-0A66C2?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/md-dilnawaj-332370301)
+[![DockerHub](https://img.shields.io/badge/DockerHub-dilnawaz9128-2496ED?style=for-the-badge&logo=docker)](https://hub.docker.com/u/dilnawaz9128)
 
 ---
 
-*"Built to demonstrate end-to-end DevOps skills: Docker → Kubernetes → Jenkins → ArgoCD → Prometheus + Grafana → Terraform → Ansible"*
+### ⭐ If you found this project helpful, please star the repository!
+
+*"Built to demonstrate end-to-end DevOps skills on a production-grade e-commerce platform."*
+
+`AWS` `Docker` `Kubernetes` `Jenkins` `ArgoCD` `Helm` `Prometheus` `Grafana` `SonarQube` `Trivy` `Terraform` `Ansible` `Nginx` `MongoDB`
+
+</div>
