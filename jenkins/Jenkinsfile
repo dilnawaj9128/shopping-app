@@ -15,6 +15,14 @@ pipeline {
             steps {
                 deleteDir()
                 git branch: 'main', url: 'https://github.com/dilnawaj9128/shopping-app.git'
+
+                script {
+                    def author = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
+                    if (author == 'Jenkins CI') {
+                        currentBuild.result = 'ABORTED'
+                        error("Last commit was from Jenkins itself, skipping build to avoid loop")
+                    }
+                }
             }
         }
 
