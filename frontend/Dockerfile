@@ -1,41 +1,26 @@
-# ── Stage 1: Build ──────────────────────────────────────
+# ── Stage 1: Build Phase ──────────────────────────────────────
 FROM node:18-alpine AS builder
-
 WORKDIR /app
+
+# Dependency resolution ko clean rakhein
 COPY package*.json ./
-RUN npm install --legacy-peer-deps && \
-    npm install ajv@^8 ajv-keywords@^5 --legacy-peer-deps
+RUN npm install --legacy-peer-deps
+
+# Source code copy karke build banayein
 COPY . .
 RUN npm run build
 
-# ── Stage 2: Serve with Nginx ────────────────────────────
+# ── Stage 2: Production Phase ────────────────────────────
 FROM nginx:1.25-alpine AS production
 
-# Fix CVE-2026-31789 openssl vulnerability
-RUN apk update && apk upgrade --no-cache
-
-# Non-root setup
-RUN addgroup -g 1001 -S nginx-grp && \
-    adduser -S nginx-usr -u 1001
-
+# Default Nginx config ko remove karein aur apna copy karein
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/
 
+# Builder stage se generated files ko Nginx folder mein copy karein
 COPY --from=builder /app/build /usr/share/nginx/html
 
-RUN chown -R nginx-usr:nginx-grp /usr/share/nginx/html && \
-    chown -R nginx-usr:nginx-grp /var/cache/nginx && \
-    chown -R nginx-usr:nginx-grp /var/log/nginx && \
-    chown -R nginx-usr:nginx-grp /etc/nginx/conf.d && \
-    mkdir -p /var/run/nginx && \
-    chown -R nginx-usr:nginx-grp /var/run/nginx && \
-    touch /var/run/nginx.pid && \
-    chown nginx-usr:nginx-grp /var/run/nginx.pid
-
-USER nginx-usr
-EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget -q --spider http://localhost:3000 || exit 1
+# Default port expose karein (Nginx default 80 use karta hai, standard approach yahi hai)
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
