@@ -1,19 +1,24 @@
-# 1. Base Image aur Application folder set kiya
-FROM node:18-alpine
+# Stage 1: Build Phase
+FROM node:18-alpine AS builder
 WORKDIR /app
 
-# 2. Pehle configuration files copy ki
 COPY package*.json ./
 
-# 3. Dependency error se bachne ke liye ye simple trick use ki
-RUN npm install ajv@8 ajv-keywords@5 --legacy-peer-deps && \
+# Packages Install
+RUN npm install ajv@^8 ajv-keywords@^5 --legacy-peer-deps && \
     npm install --legacy-peer-deps
 
-# 4. Pura code copy kiya aur build banayi
 COPY . .
 RUN npm run build
 
-# 5. Production build ko port 3000 par launch kar diya
-RUN npm install -g serve
-EXPOSE 3000
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Stage 2: Production Phase
+FROM nginx:1.25-alpine AS production
+
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/
+
+COPY --from=builder /app/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
