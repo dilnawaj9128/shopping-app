@@ -1,19 +1,26 @@
-# 1. Base Image
-FROM node:18-alpine
+Stage 1: Build Phase
+FROM node:18-alpine AS builder
 WORKDIR /app
 
-# 2. Copy configuration files
+
 COPY package*.json ./
 
-# 3. Dependency
-RUN npm install ajv@8 ajv-keywords@5 --legacy-peer-deps && \
+2 Packages Installation
+RUN npm install ajv@^8 ajv-keywords@^5 --legacy-peer-deps && \
     npm install --legacy-peer-deps
 
-# 4. Code copy
+
 COPY . .
 RUN npm run build
 
-# 5. Production build
-RUN npm install -g serve
-EXPOSE 3000
-CMD ["serve", "-s", "build", "-l", "3000"]
+Stage 2: Production Phase
+FROM nginx:1.25-alpine AS production
+
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/
+
+COPY --from=builder /app/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
