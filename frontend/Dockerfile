@@ -1,24 +1,19 @@
-# ── Stage 1: Build Phase ──────────────────────────────────────
-FROM node:18-alpine AS builder
+# 1. Base Image
+FROM node:18-alpine
 WORKDIR /app
 
+# 2. Copy configuration files
 COPY package*.json ./
 
-# Sabse pehle strict compatibility ke liye ajv aur ajv-keywords install karein, phir baaki packages
-RUN npm install ajv@^8 ajv-keywords@^5 --legacy-peer-deps && \
+# 3. Dependency
+RUN npm install ajv@8 ajv-keywords@5 --legacy-peer-deps && \
     npm install --legacy-peer-deps
 
+# 4. Code copy
 COPY . .
 RUN npm run build
 
-# ── Stage 2: Production Phase ────────────────────────────
-FROM nginx:1.25-alpine AS production
-
-RUN rm /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/
-
-COPY --from=builder /app/build /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# 5. Production build
+RUN npm install -g serve
+EXPOSE 3000
+CMD ["serve", "-s", "build", "-l", "3000"]
