@@ -35,61 +35,7 @@ The project demonstrates automated CI/CD, code quality analysis, container secur
 ---
 
 ## 🏗️ Architecture
-
-```text
-                         Developer
-                             │
-                             │ git push
-                             ▼
-                         GitHub
-                             │
-                             │ Webhook
-                             ▼
-                          Jenkins
-                             │
-          ┌──────────────────┼──────────────────┐
-          │                  │                  │
-          ▼                  ▼                  ▼
-      SonarQube          Docker Build       Trivy Scan
-          │                  │                  │
-          └──────────────────┼──────────────────┘
-                             │
-                             ▼
-                         Docker Hub
-                             │
-                             ▼
-                Update Kubernetes Manifests
-                             │
-                             ▼
-                          GitHub
-                             │
-                             ▼
-                          Argo CD
-                             │
-                         Auto Sync
-                             │
-                             ▼
-                     Kubernetes (KIND)
-                             │
-          ┌──────────────────┼──────────────────┐
-          │                  │                  │
-          ▼                  ▼                  ▼
-    Frontend Pods       Backend Pods       MongoDB
-          │
-          ▼
-    Kubernetes Service
-          │
-          ▼
-    NGINX Ingress
-          │
-          ▼
-       EC2 Nginx
-          │
-          ▼
-        Internet
-```
-
----
+![image](https://github.com/dilnawaj9128/shopping-app/blob/4da3ae66c4d16acf650b5832e5fea5d2ea1d6997/Screenshots/file_00000000bdc072098cb0239133ab0dca.png)
 
 ## 🛠️ Technologies Used
 
