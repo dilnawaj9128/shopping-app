@@ -1,14 +1,10 @@
 terraform {
   required_version = ">= 1.5.0"
   required_providers {
-    aws = { source = "hashicorp/aws", version = "~> 5.0" }
-  }
-  backend "s3" {
-    bucket         = "shopflow-terraform-state"
-    key            = "eks/terraform.tfstate"
-    region         = "ap-south-1"
-    dynamodb_table = "terraform-state-lock"
-    encrypt        = true
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 }
 
@@ -16,80 +12,136 @@ provider "aws" {
   region = var.aws_region
 }
 
-# ── VPC ──────────────────────────────────────────────────
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "5.1.2"
-
-  name = "${var.project_name}-vpc"
-  cidr = "10.0.0.0/16"
-  azs  = ["${var.aws_region}a", "${var.aws_region}b"]
-
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
-
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
-  enable_dns_hostnames = true
-
-  public_subnet_tags  = { "kubernetes.io/role/elb" = 1 }
-  private_subnet_tags = { "kubernetes.io/role/internal-elb" = 1 }
-  tags = var.tags
+# ── S3 Bucket (Terraform Remote State) ───────────────────
+resource "aws_s3_bucket" "state" {
+  bucket        = "${var.project_name}-terraform-state-${var.account_id}"
+  force_destroy = true
+  tags          = var.tags
 }
 
-# ── EKS Cluster ──────────────────────────────────────────
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "19.16.0"
+resource "aws_s3_bucket_versioning" "state" {
+  bucket = aws_s3_bucket.state.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 
-  cluster_name                   = "${var.project_name}-eks"
-  cluster_version                = "1.28"
-  vpc_id                         = module.vpc.vpc_id
-  subnet_ids                     = module.vpc.private_subnets
-  cluster_endpoint_public_access = true
-
-  eks_managed_node_groups = {
-    general = {
-      desired_size   = 2
-      min_size       = 1
-      max_size       = 5
-      instance_types = ["t3.medium"]
-      capacity_type  = "ON_DEMAND"
+resource "aws_s3_bucket_server_side_encryption_configuration" "state" {
+  bucket = aws_s3_bucket.state.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
     }
   }
+}
+
+resource "aws_s3_bucket_public_access_block" "state" {
+  bucket                  = aws_s3_bucket.state.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# ── DynamoDB (State Lock) ─────────────────────────────────
+resource "aws_dynamodb_table" "lock" {
+  name         = "${var.project_name}-state-lock"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+
   tags = var.tags
 }
 
 # ── ECR Repositories ─────────────────────────────────────
-resource "aws_ecr_repository" "shopflow" {
-  for_each             = toset(["backend", "frontend"])
-  name                 = "${var.project_name}/${each.key}"
+resource "aws_ecr_repository" "backend" {
+  name                 = "${var.project_name}-backend"
   image_tag_mutability = "MUTABLE"
-  image_scanning_configuration { scan_on_push = true }
-  tags = var.tags
-}
+  force_delete         = true
 
-# ── S3 for Terraform State ───────────────────────────────
-resource "aws_s3_bucket" "state" {
-  bucket = "${var.project_name}-terraform-state"
-  tags   = var.tags
-}
-resource "aws_s3_bucket_versioning" "state" {
-  bucket = aws_s3_bucket.state.id
-  versioning_configuration { status = "Enabled" }
-}
-resource "aws_s3_bucket_server_side_encryption_configuration" "state" {
-  bucket = aws_s3_bucket.state.id
-  rule {
-    apply_server_side_encryption_by_default { sse_algorithm = "AES256" }
+  image_scanning_configuration {
+    scan_on_push = true
   }
+
+  tags = var.tags
 }
 
-# ── DynamoDB State Lock ───────────────────────────────────
-resource "aws_dynamodb_table" "lock" {
-  name         = "terraform-state-lock"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-  attribute { name = "LockID", type = "S" }
+resource "aws_ecr_repository" "frontend" {
+  name                 = "${var.project_name}-frontend"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
   tags = var.tags
+}
+
+# ── ECR Lifecycle Policy (keep last 5 images) ────────────
+resource "aws_ecr_lifecycle_policy" "backend" {
+  repository = aws_ecr_repository.backend.name
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last 5 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 5
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
+resource "aws_ecr_lifecycle_policy" "frontend" {
+  repository = aws_ecr_repository.frontend.name
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last 5 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 5
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
+# ── IAM Role (EC2 → ECR Access) ──────────────────────────
+resource "aws_iam_role" "ec2_role" {
+  name = "${var.project_name}-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "ecr_policy" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "s3_policy" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.project_name}-ec2-profile"
+  role = aws_iam_role.ec2_role.name
 }

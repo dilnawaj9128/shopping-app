@@ -1,6 +1,28 @@
-output "eks_cluster_name"     { value = module.eks.cluster_name }
-output "eks_cluster_endpoint" { value = module.eks.cluster_endpoint; sensitive = true }
-output "ecr_urls" {
-  value = { for k, v in aws_ecr_repository.shopflow : k => v.repository_url }
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "ap-south-1"
 }
-output "vpc_id" { value = module.vpc.vpc_id }
+
+variable "project_name" {
+  description = "Project name"
+  type        = string
+  default     = "shopflow"
+}
+
+variable "account_id" {
+  description = "AWS Account ID (for unique S3 bucket name)"
+  type        = string
+  default     = "407539787865"
+}
+
+variable "tags" {
+  description = "Common tags"
+  type        = map(string)
+  default = {
+    Project     = "shopflow"
+    Environment = "production"
+    ManagedBy   = "terraform"
+    Owner       = "dilnawaj"
+  }
+}
